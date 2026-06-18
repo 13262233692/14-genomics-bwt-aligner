@@ -180,7 +180,8 @@ PYBIND11_MODULE(bwt_aligner, m) {
         .def("align_paired", &Aligner::align_paired)
         .def("get_references", &Aligner::get_references, py::return_value_policy::reference_internal)
         .def("get_fm_index", &Aligner::get_fm_index, py::return_value_policy::reference_internal)
-        .def("align_read", &Aligner::align_read);
+        .def("align_read", &Aligner::align_read)
+        .def("memory_usage", &Aligner::memory_usage);
 
     m.def("reverse_complement", &reverse_complement);
     m.def("complement_base", &complement_base);

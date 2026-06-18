@@ -29,8 +29,13 @@ void BWT::build(const std::string& text, const SuffixArray& sa) {
     }
 }
 
+size_t BWT::memory_usage() const {
+    return bwt_str_.capacity();
+}
+
 void BWT::clear() {
     bwt_str_.clear();
+    bwt_str_.shrink_to_fit();
     primary_char_ = '$';
     primary_pos_ = -1;
 }

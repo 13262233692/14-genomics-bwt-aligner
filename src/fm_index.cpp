@@ -5,7 +5,8 @@
 namespace bwt_aligner {
 
 FMIndex::FMIndex()
-    : size_(0) {
+    : size_(0)
+    , occ_bucket_count_(0) {
     c_table_.fill(0);
 }
 
@@ -47,19 +48,21 @@ void FMIndex::build_c_table() {
 void FMIndex::build_occ_table() {
     const std::string& bwt = bwt_.get_bwt();
     int64_t n = static_cast<int64_t>(bwt.size());
-    int64_t num_buckets = (n + OCC_INTERVAL - 1) / OCC_INTERVAL + 1;
 
-    occ_table_.resize(static_cast<size_t>(num_buckets));
-    for (auto& arr : occ_table_) {
-        arr.fill(0);
-    }
+    occ_bucket_count_ = (n + OCC_INTERVAL - 1) / OCC_INTERVAL + 1;
+    occ_packed_.clear();
+    occ_packed_.resize(static_cast<size_t>(occ_bucket_count_ * ALPHABET_SIZE), 0);
 
     std::array<int64_t, ALPHABET_SIZE> running;
     running.fill(0);
 
     for (int64_t i = 0; i < n; ++i) {
         if (i % OCC_INTERVAL == 0) {
-            occ_table_[static_cast<size_t>(i / OCC_INTERVAL)] = running;
+            int64_t bucket = i / OCC_INTERVAL;
+            for (int c = 0; c < ALPHABET_SIZE; ++c) {
+                uint32_t val = static_cast<uint32_t>(running[c]);
+                occ_packed_[static_cast<size_t>(bucket * ALPHABET_SIZE + c)] = val;
+            }
         }
         int idx = char_to_idx(bwt[static_cast<size_t>(i)]);
         if (idx >= 0 && idx < ALPHABET_SIZE) {
@@ -67,35 +70,44 @@ void FMIndex::build_occ_table() {
         }
     }
 
-    occ_table_[static_cast<size_t>(num_buckets - 1)] = running;
+    {
+        int64_t bucket = occ_bucket_count_ - 1;
+        for (int c = 0; c < ALPHABET_SIZE; ++c) {
+            uint32_t val = static_cast<uint32_t>(running[c]);
+            occ_packed_[static_cast<size_t>(bucket * ALPHABET_SIZE + c)] = val;
+        }
+    }
+}
+
+int64_t FMIndex::get_occ_from_packed(int64_t bucket_idx, int64_t char_idx) const {
+    if (bucket_idx < 0) return 0;
+    if (bucket_idx >= occ_bucket_count_) bucket_idx = occ_bucket_count_ - 1;
+    size_t pos = static_cast<size_t>(bucket_idx * ALPHABET_SIZE + char_idx);
+    if (pos >= occ_packed_.size()) return 0;
+    return static_cast<int64_t>(occ_packed_[pos]);
 }
 
 void FMIndex::build_sa_samples() {
     int64_t n = static_cast<int64_t>(sa_.size());
     sa_samples_.clear();
+    sa_samples_.reserve(static_cast<size_t>((n + SA_SAMPLE_RATE - 1) / SA_SAMPLE_RATE));
 
     for (int64_t i = 0; i < n; i += SA_SAMPLE_RATE) {
         sa_samples_.push_back(sa_[static_cast<size_t>(i)]);
     }
 }
 
-int64_t FMIndex::count_bwt(int64_t row, char c) const {
+int64_t FMIndex::count_bwt_in_range(int64_t start, int64_t end, char c) const {
     int c_idx = char_to_idx(c);
     if (c_idx < 0 || c_idx >= ALPHABET_SIZE) return 0;
 
-    int64_t bucket = row / OCC_INTERVAL;
-    int64_t rem = row % OCC_INTERVAL;
-
-    int64_t count = occ_table_[static_cast<size_t>(bucket)][static_cast<size_t>(c_idx)];
-
+    int64_t count = 0;
     const std::string& bwt = bwt_.get_bwt();
-    int64_t start = bucket * OCC_INTERVAL;
-    for (int64_t i = start; i < start + rem && i < static_cast<int64_t>(bwt.size()); ++i) {
+    for (int64_t i = start; i < end && i < static_cast<int64_t>(bwt.size()); ++i) {
         if (char_to_idx(bwt[static_cast<size_t>(i)]) == c_idx) {
             ++count;
         }
     }
-
     return count;
 }
 
@@ -134,7 +146,20 @@ int64_t FMIndex::get_c(char c) const {
 int64_t FMIndex::get_occ(int64_t row, char c) const {
     if (row < 0) return 0;
     if (row >= size_) row = size_ - 1;
-    return count_bwt(row + 1, c);
+
+    int c_idx = char_to_idx(c);
+    if (c_idx < 0 || c_idx >= ALPHABET_SIZE) return 0;
+
+    int64_t target = row + 1;
+    int64_t bucket = target / OCC_INTERVAL;
+    int64_t rem = target % OCC_INTERVAL;
+
+    int64_t count = get_occ_from_packed(bucket, c_idx);
+
+    int64_t start = bucket * OCC_INTERVAL;
+    count += count_bwt_in_range(start, start + rem, c);
+
+    return count;
 }
 
 int64_t FMIndex::get_sa_value(int64_t sa_index) const {
@@ -165,14 +190,29 @@ int64_t FMIndex::resolve_position(int64_t row) const {
     return -1;
 }
 
+size_t FMIndex::memory_usage() const {
+    size_t total = 0;
+    total += text_.capacity();
+    total += sa_.size() * sizeof(int64_t);
+    total += bwt_.size();
+    total += occ_packed_.capacity() * sizeof(uint32_t);
+    total += sa_samples_.capacity() * sizeof(int64_t);
+    total += sizeof(c_table_);
+    return total;
+}
+
 void FMIndex::clear() {
     text_.clear();
+    text_.shrink_to_fit();
     sa_.clear();
     bwt_.clear();
     size_ = 0;
     c_table_.fill(0);
-    occ_table_.clear();
+    occ_packed_.clear();
+    occ_packed_.shrink_to_fit();
+    occ_bucket_count_ = 0;
     sa_samples_.clear();
+    sa_samples_.shrink_to_fit();
 }
 
 }

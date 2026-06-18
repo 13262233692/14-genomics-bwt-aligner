@@ -21,6 +21,7 @@ public:
     char get_primary() const { return primary_char_; }
     int64_t get_primary_pos() const { return primary_pos_; }
 
+    size_t memory_usage() const;
     void clear();
 
 private:

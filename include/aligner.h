@@ -58,12 +58,14 @@ public:
     AlignmentResult align_read(const FastqRead& read) const;
     std::vector<AlignmentResult> align_read_batch(const std::vector<FastqRead>& reads) const;
 
+    size_t memory_usage() const;
+
 private:
     AlignerConfig config_;
     FMIndex fm_index_;
     BackwardSearch backward_search_;
     std::vector<ReferenceSequence> references_;
-    std::string concatenated_text_;
+    std::vector<int64_t> ref_offsets_;
     bool index_built_;
 
     void worker_thread_single(FastqReader* reader,

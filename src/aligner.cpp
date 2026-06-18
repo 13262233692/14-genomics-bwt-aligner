@@ -3,6 +3,7 @@
 #include <thread>
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 #include <unordered_map>
 
 namespace bwt_aligner {
@@ -19,19 +20,26 @@ void Aligner::set_config(const AlignerConfig& config) {
 }
 
 int64_t Aligner::get_ref_id_from_position(int64_t global_pos, int64_t& local_pos) const {
-    if (references_.empty()) return -1;
+    if (ref_offsets_.empty()) { local_pos = -1; return -1; }
 
-    for (size_t i = 0; i < references_.size(); ++i) {
-        const auto& ref = references_[i];
-        if (global_pos >= ref.global_offset &&
-            global_pos < static_cast<int64_t>(ref.global_offset + ref.length)) {
-            local_pos = global_pos - ref.global_offset;
-            return static_cast<int64_t>(i);
-        }
+    auto it = std::upper_bound(ref_offsets_.begin(), ref_offsets_.end(), global_pos);
+    if (it == ref_offsets_.begin()) { local_pos = -1; return -1; }
+
+    int64_t idx = static_cast<int64_t>(it - ref_offsets_.begin()) - 1;
+    if (idx < 0 || idx >= static_cast<int64_t>(references_.size())) {
+        local_pos = -1;
+        return -1;
     }
 
-    local_pos = -1;
-    return -1;
+    const auto& ref = references_[static_cast<size_t>(idx)];
+    local_pos = global_pos - ref.global_offset;
+
+    if (local_pos < 0 || local_pos >= static_cast<int64_t>(ref.length)) {
+        local_pos = -1;
+        return -1;
+    }
+
+    return idx;
 }
 
 bool Aligner::load_reference(const std::string& fasta_filename) {
@@ -46,44 +54,49 @@ bool Aligner::load_reference(const std::string& fasta_filename) {
         return false;
     }
 
-    concatenated_text_.clear();
+    std::string concatenated_text;
+    concatenated_text.reserve(
+        std::accumulate(references_.begin(), references_.end(), size_t(0),
+            [](size_t s, const ReferenceSequence& r) { return s + r.length; })
+        + references_.size()
+    );
+
+    ref_offsets_.clear();
+    ref_offsets_.reserve(references_.size());
+
     for (size_t i = 0; i < references_.size(); ++i) {
-        references_[i].global_offset = concatenated_text_.size();
-        concatenated_text_ += references_[i].sequence;
+        references_[i].global_offset = concatenated_text.size();
+        ref_offsets_.push_back(static_cast<int64_t>(concatenated_text.size()));
+        concatenated_text += references_[i].sequence;
         if (i < references_.size() - 1) {
-            concatenated_text_ += '#';
+            concatenated_text += '#';
         }
+        references_[i].sequence.clear();
+        references_[i].sequence.shrink_to_fit();
     }
 
     std::cout << "Loaded " << references_.size() << " reference sequences, "
-              << "total length: " << concatenated_text_.size() << " bp" << std::endl;
+              << "total length: " << concatenated_text.size() << " bp" << std::endl;
 
+    fm_index_.build(concatenated_text);
+    backward_search_.set_fm_index(&fm_index_);
+
+    concatenated_text.clear();
+    concatenated_text.shrink_to_fit();
+
+    index_built_ = true;
     return true;
 }
 
 bool Aligner::build_index(const std::string& fasta_filename) {
-    std::cout << "Loading reference genome..." << std::endl;
+    std::cout << "Loading reference genome and building index..." << std::endl;
     if (!load_reference(fasta_filename)) {
         return false;
     }
 
-    std::cout << "Building Suffix Array..." << std::endl;
-    SuffixArray sa;
-    std::string text_with_dollar = concatenated_text_ + '$';
-    sa.build(text_with_dollar);
-    std::cout << "Suffix Array built. Size: " << sa.size() << std::endl;
-
-    std::cout << "Building BWT..." << std::endl;
-    BWT bwt;
-    bwt.build(text_with_dollar, sa);
-    std::cout << "BWT built. Length: " << bwt.size() << std::endl;
-
-    std::cout << "Building FM-Index..." << std::endl;
-    fm_index_.build(text_with_dollar, sa, bwt);
-    backward_search_.set_fm_index(&fm_index_);
     std::cout << "FM-Index built successfully." << std::endl;
-
-    index_built_ = true;
+    std::cout << "Memory usage: " << (fm_index_.memory_usage() / (1024.0 * 1024.0))
+              << " MB" << std::endl;
     return true;
 }
 
@@ -118,13 +131,12 @@ AlignmentResult Aligner::align_read(const FastqRead& read) const {
     int32_t read_len = static_cast<int32_t>(read.sequence.size());
     int32_t seed_len = std::min(config_.seed_length, read_len);
 
-    std::vector<SeedHit> best_hits;
     int32_t best_mismatches = config_.max_mismatches + 1;
 
     {
         SearchRange range = backward_search_.search(read.sequence);
         if (range.valid() && range.count() > 0 && range.count() < 10000) {
-            for (int64_t i = range.low; i <= range.high && best_hits.empty(); ++i) {
+            for (int64_t i = range.low; i <= range.high; ++i) {
                 int64_t global_pos = fm_index_.resolve_position(i);
                 int64_t local_pos;
                 int64_t ref_id = get_ref_id_from_position(global_pos, local_pos);
@@ -154,7 +166,7 @@ AlignmentResult Aligner::align_read(const FastqRead& read) const {
         std::string rc = reverse_complement(read.sequence);
         SearchRange range = backward_search_.search(rc);
         if (range.valid() && range.count() > 0 && range.count() < 10000) {
-            for (int64_t i = range.low; i <= range.high && best_hits.empty(); ++i) {
+            for (int64_t i = range.low; i <= range.high; ++i) {
                 int64_t global_pos = fm_index_.resolve_position(i);
                 int64_t local_pos;
                 int64_t ref_id = get_ref_id_from_position(global_pos, local_pos);
@@ -413,6 +425,15 @@ bool Aligner::align_paired(const std::string& fastq_r1,
     std::cout << "Alignment complete. Total reads aligned: " << writer.total_written() << std::endl;
 
     return true;
+}
+
+size_t Aligner::memory_usage() const {
+    size_t total = fm_index_.memory_usage();
+    total += ref_offsets_.capacity() * sizeof(int64_t);
+    for (const auto& ref : references_) {
+        total += ref.name.capacity() + ref.sequence.capacity();
+    }
+    return total;
 }
 
 }

@@ -21,13 +21,8 @@ public:
 
 private:
     std::vector<int64_t> sa_;
-    std::vector<int64_t> rank_;
-    std::vector<int64_t> tmp_;
-    int64_t n_;
-    int64_t k_;
 
-    bool compare_sa(int64_t i, int64_t j);
-    void build_sa(const std::string& s);
+    void sais(const int64_t* s, int64_t* sa, int64_t n, int64_t k);
 };
 
 }

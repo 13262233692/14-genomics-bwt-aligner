@@ -12,7 +12,9 @@ namespace bwt_aligner {
 class FMIndex {
 public:
     static constexpr int ALPHABET_SIZE = 6;
-    static constexpr int OCC_INTERVAL = 128;
+    static constexpr int OCC_INTERVAL = 512;
+    static constexpr int SA_SAMPLE_RATE = 32;
+    static constexpr int BWT_PACKED_DENSITY = 4;
 
     FMIndex();
     ~FMIndex();
@@ -34,7 +36,7 @@ public:
 
     void clear();
 
-    static constexpr int SA_SAMPLE_RATE = 32;
+    size_t memory_usage() const;
 
 private:
     std::string text_;
@@ -43,13 +45,15 @@ private:
     int64_t size_;
 
     std::array<int64_t, ALPHABET_SIZE> c_table_;
-    std::vector<std::array<int64_t, ALPHABET_SIZE>> occ_table_;
+    std::vector<uint32_t> occ_packed_;
+    int64_t occ_bucket_count_;
     std::vector<int64_t> sa_samples_;
 
     void build_c_table();
     void build_occ_table();
     void build_sa_samples();
-    int64_t count_bwt(int64_t row, char c) const;
+    int64_t get_occ_from_packed(int64_t bucket_idx, int64_t char_idx) const;
+    int64_t count_bwt_in_range(int64_t start, int64_t end, char c) const;
     int char_to_idx(char c) const;
 };
 

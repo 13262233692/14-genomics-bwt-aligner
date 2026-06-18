@@ -81,3 +81,7 @@ if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
+
+add_executable(test_sa test_sa.cpp)
+target_link_libraries(test_sa bwt_aligner_core)
+target_include_directories(test_sa PRIVATE ${INCLUDE_DIR})
