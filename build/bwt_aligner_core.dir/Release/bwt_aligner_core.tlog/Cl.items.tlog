@@ -1,0 +1,8 @@
+D:\SOLO-0616-2\14-genomics-bwt-aligner\src\fasta_reader.cpp;D:\SOLO-0616-2\14-genomics-bwt-aligner\build\bwt_aligner_core.dir\Release\fasta_reader.obj
+D:\SOLO-0616-2\14-genomics-bwt-aligner\src\fastq_reader.cpp;D:\SOLO-0616-2\14-genomics-bwt-aligner\build\bwt_aligner_core.dir\Release\fastq_reader.obj
+D:\SOLO-0616-2\14-genomics-bwt-aligner\src\suffix_array.cpp;D:\SOLO-0616-2\14-genomics-bwt-aligner\build\bwt_aligner_core.dir\Release\suffix_array.obj
+D:\SOLO-0616-2\14-genomics-bwt-aligner\src\bwt.cpp;D:\SOLO-0616-2\14-genomics-bwt-aligner\build\bwt_aligner_core.dir\Release\bwt.obj
+D:\SOLO-0616-2\14-genomics-bwt-aligner\src\fm_index.cpp;D:\SOLO-0616-2\14-genomics-bwt-aligner\build\bwt_aligner_core.dir\Release\fm_index.obj
+D:\SOLO-0616-2\14-genomics-bwt-aligner\src\backward_search.cpp;D:\SOLO-0616-2\14-genomics-bwt-aligner\build\bwt_aligner_core.dir\Release\backward_search.obj
+D:\SOLO-0616-2\14-genomics-bwt-aligner\src\sam_writer.cpp;D:\SOLO-0616-2\14-genomics-bwt-aligner\build\bwt_aligner_core.dir\Release\sam_writer.obj
+D:\SOLO-0616-2\14-genomics-bwt-aligner\src\aligner.cpp;D:\SOLO-0616-2\14-genomics-bwt-aligner\build\bwt_aligner_core.dir\Release\aligner.obj

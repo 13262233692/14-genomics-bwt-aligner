@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\build\CMakeFiles\6c808e41418da525d5132fdb257aa195\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{9EEB60E8-CFEE-32C8-BE9D-A69C94E53C04}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,10 @@
+^D:\SOLO-0616-2\14-GENOMICS-BWT-ALIGNER\BUILD\CMAKEFILES\6C808E41418DA525D5132FDB257AA195\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/SOLO-0616-2/14-genomics-bwt-aligner -BD:/SOLO-0616-2/14-genomics-bwt-aligner/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/SOLO-0616-2/14-genomics-bwt-aligner/build/genomics_bwt_aligner.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
