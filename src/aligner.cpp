@@ -10,6 +10,8 @@ namespace bwt_aligner {
 
 Aligner::Aligner()
     : index_built_(false) {
+    SWConfig sw_cfg;
+    smith_waterman_.set_config(sw_cfg);
 }
 
 Aligner::~Aligner() {
@@ -17,6 +19,9 @@ Aligner::~Aligner() {
 
 void Aligner::set_config(const AlignerConfig& config) {
     config_ = config;
+    SWConfig sw_cfg;
+    sw_cfg.score_threshold = config_.sw_score_threshold;
+    smith_waterman_.set_config(sw_cfg);
 }
 
 int64_t Aligner::get_ref_id_from_position(int64_t global_pos, int64_t& local_pos) const {
@@ -71,8 +76,6 @@ bool Aligner::load_reference(const std::string& fasta_filename) {
         if (i < references_.size() - 1) {
             concatenated_text += '#';
         }
-        references_[i].sequence.clear();
-        references_[i].sequence.shrink_to_fit();
     }
 
     std::cout << "Loaded " << references_.size() << " reference sequences, "
@@ -229,6 +232,92 @@ AlignmentResult Aligner::align_read(const FastqRead& read) const {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    if (config_.enable_sw_fallback && aln.is_unmapped && !read.sequence.empty()) {
+        std::vector<SeedHit> seeds = backward_search_.find_seeds_both_strands(
+            read.sequence, seed_len, 0);
+
+        std::unordered_map<int64_t, std::vector<SeedHit>> pos_groups;
+        for (const auto& seed : seeds) {
+            int64_t aligned_pos = seed.ref_position - seed.query_start;
+            pos_groups[aligned_pos].push_back(seed);
+        }
+
+        int32_t best_score = config_.sw_score_threshold - 1;
+        SWResult best_sw;
+        int64_t best_global_pos = -1;
+        int64_t best_ref_id = -1;
+        bool best_is_rev = false;
+        int64_t best_local_pos = -1;
+
+        const ReferenceSequence* best_ref = nullptr;
+
+        for (const auto& kv : pos_groups) {
+            if (static_cast<int32_t>(kv.second.size()) >= config_.min_seed_hits) {
+                int64_t global_pos = kv.first;
+                bool is_rev = kv.second.front().is_reverse;
+
+                int64_t local_pos;
+                int64_t ref_id = get_ref_id_from_position(global_pos, local_pos);
+
+                if (ref_id < 0) continue;
+
+                const auto& ref = references_[static_cast<size_t>(ref_id)];
+
+                int32_t flank = config_.sw_flank;
+                int32_t ref_start = std::max(static_cast<int32_t>(0),
+                    static_cast<int32_t>(local_pos) - flank);
+                int32_t ref_end = std::min(static_cast<int32_t>(ref.length),
+                    static_cast<int32_t>(local_pos) + read_len + flank);
+
+                if (ref_end <= ref_start) continue;
+
+                std::string query_seq = is_rev ?
+                    reverse_complement(read.sequence) : read.sequence;
+
+                SWResult sw = smith_waterman_.align(
+                    query_seq, ref.sequence, ref_start, ref_end);
+
+                if (sw.valid && sw.score > best_score) {
+                    best_score = sw.score;
+                    best_sw = sw;
+                    best_global_pos = global_pos;
+                    best_ref_id = ref_id;
+                    best_is_rev = is_rev;
+                    best_local_pos = sw.ref_start;
+                    best_ref = &ref;
+                }
+            }
+        }
+
+        if (best_sw.valid && best_ref) {
+            int32_t total_err = best_sw.num_mismatches + best_sw.num_ins + best_sw.num_del;
+            int32_t aligned_len = best_sw.query_end - best_sw.query_start + 1;
+
+            aln.is_unmapped = false;
+            aln.is_reverse = best_is_rev;
+            aln.position = best_local_pos;
+            aln.ref_id = static_cast<int32_t>(best_ref_id);
+            aln.ref_name = best_ref->name;
+            aln.num_mismatches = total_err;
+            aln.cigar = best_sw.cigar;
+            aln.mapq = static_cast<int32_t>(std::min(60.0,
+                25.0 - 10.0 * std::log10(std::max(1.0, (double)total_err + 1))));
+            if (aln.mapq < 0) aln.mapq = 0;
+
+            if (best_sw.query_start > 0 || best_sw.query_end + 1 < read_len) {
+                std::string new_cigar;
+                if (best_sw.query_start > 0) {
+                    new_cigar += std::to_string(best_sw.query_start) + "S";
+                }
+                new_cigar += best_sw.cigar;
+                if (best_sw.query_end + 1 < read_len) {
+                    new_cigar += std::to_string(read_len - best_sw.query_end - 1) + "S";
+                }
+                aln.cigar = new_cigar;
             }
         }
     }

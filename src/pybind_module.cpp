@@ -11,6 +11,7 @@
 #include "bwt.h"
 #include "backward_search.h"
 #include "sam_writer.h"
+#include "smith_waterman.h"
 
 namespace py = pybind11;
 using namespace bwt_aligner;
@@ -78,7 +79,46 @@ PYBIND11_MODULE(bwt_aligner, m) {
         .def_readwrite("max_mismatches", &AlignerConfig::max_mismatches)
         .def_readwrite("min_seed_hits", &AlignerConfig::min_seed_hits)
         .def_readwrite("batch_size", &AlignerConfig::batch_size)
-        .def_readwrite("min_mapq", &AlignerConfig::min_mapq);
+        .def_readwrite("min_mapq", &AlignerConfig::min_mapq)
+        .def_readwrite("sw_flank", &AlignerConfig::sw_flank)
+        .def_readwrite("sw_score_threshold", &AlignerConfig::sw_score_threshold)
+        .def_readwrite("enable_sw_fallback", &AlignerConfig::enable_sw_fallback);
+
+    py::class_<SWConfig>(m, "SWConfig")
+        .def(py::init<>())
+        .def_readwrite("match_score", &SWConfig::match_score)
+        .def_readwrite("mismatch_score", &SWConfig::mismatch_score)
+        .def_readwrite("gap_open", &SWConfig::gap_open)
+        .def_readwrite("gap_extend", &SWConfig::gap_extend)
+        .def_readwrite("score_threshold", &SWConfig::score_threshold);
+
+    py::class_<SWResult>(m, "SWResult")
+        .def(py::init<>())
+        .def_readwrite("score", &SWResult::score)
+        .def_readwrite("ref_start", &SWResult::ref_start)
+        .def_readwrite("ref_end", &SWResult::ref_end)
+        .def_readwrite("query_start", &SWResult::query_start)
+        .def_readwrite("query_end", &SWResult::query_end)
+        .def_readwrite("num_mismatches", &SWResult::num_mismatches)
+        .def_readwrite("num_ins", &SWResult::num_ins)
+        .def_readwrite("num_del", &SWResult::num_del)
+        .def_readwrite("cigar", &SWResult::cigar)
+        .def_readwrite("valid", &SWResult::valid);
+
+    py::class_<SmithWaterman>(m, "SmithWaterman")
+        .def(py::init<>())
+        .def("set_config", &SmithWaterman::set_config)
+        .def("get_config", &SmithWaterman::get_config, py::return_value_policy::reference_internal)
+        .def("align", &SmithWaterman::align,
+             py::arg("query"),
+             py::arg("ref"),
+             py::arg("ref_start") = 0,
+             py::arg("ref_end") = -1)
+        .def("align_avx2", &SmithWaterman::align_avx2,
+             py::arg("query"),
+             py::arg("ref"),
+             py::arg("ref_start") = 0,
+             py::arg("ref_end") = -1);
 
     py::class_<FastaReader>(m, "FastaReader")
         .def(py::init<>())

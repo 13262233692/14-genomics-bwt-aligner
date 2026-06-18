@@ -6,6 +6,7 @@
 #include "fastq_reader.h"
 #include "sam_writer.h"
 #include "sequence.h"
+#include "smith_waterman.h"
 #include <string>
 #include <vector>
 #include <thread>
@@ -21,6 +22,9 @@ struct AlignerConfig {
     int32_t min_seed_hits;
     int32_t batch_size;
     int32_t min_mapq;
+    int32_t sw_flank;
+    int32_t sw_score_threshold;
+    bool enable_sw_fallback;
 
     AlignerConfig()
         : num_threads(std::thread::hardware_concurrency())
@@ -29,6 +33,9 @@ struct AlignerConfig {
         , min_seed_hits(1)
         , batch_size(10000)
         , min_mapq(0)
+        , sw_flank(50)
+        , sw_score_threshold(8)
+        , enable_sw_fallback(true)
     {}
 };
 
@@ -66,6 +73,7 @@ private:
     BackwardSearch backward_search_;
     std::vector<ReferenceSequence> references_;
     std::vector<int64_t> ref_offsets_;
+    mutable SmithWaterman smith_waterman_;
     bool index_built_;
 
     void worker_thread_single(FastqReader* reader,

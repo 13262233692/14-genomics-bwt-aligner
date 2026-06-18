@@ -11,9 +11,13 @@ endif()
 
 if(MSVC)
     add_compile_options(/O2 /W3 /MD)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        add_compile_options(/arch:AVX2)
+    endif()
 else()
     add_compile_options(-O3 -Wall -Wextra -pthread)
     add_link_options(-pthread)
+    add_compile_options(-mavx2 -mfma)
 endif()
 
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -27,6 +31,7 @@ set(CORE_SOURCES
     ${SRC_DIR}/fm_index.cpp
     ${SRC_DIR}/backward_search.cpp
     ${SRC_DIR}/sam_writer.cpp
+    ${SRC_DIR}/smith_waterman.cpp
     ${SRC_DIR}/aligner.cpp
 )
 
@@ -38,6 +43,7 @@ set(CORE_HEADERS
     ${INCLUDE_DIR}/fm_index.h
     ${INCLUDE_DIR}/backward_search.h
     ${INCLUDE_DIR}/sam_writer.h
+    ${INCLUDE_DIR}/smith_waterman.h
     ${INCLUDE_DIR}/aligner.h
     ${INCLUDE_DIR}/sequence.h
 )
@@ -85,3 +91,7 @@ endif()
 add_executable(test_sa test_sa.cpp)
 target_link_libraries(test_sa bwt_aligner_core)
 target_include_directories(test_sa PRIVATE ${INCLUDE_DIR})
+
+add_executable(test_sw test_sw.cpp)
+target_link_libraries(test_sw bwt_aligner_core)
+target_include_directories(test_sw PRIVATE ${INCLUDE_DIR})

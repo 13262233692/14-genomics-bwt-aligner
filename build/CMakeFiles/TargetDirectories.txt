@@ -1,5 +1,8 @@
 D:/SOLO-0616-2/14-genomics-bwt-aligner/build/CMakeFiles/bwt_aligner_core.dir
 D:/SOLO-0616-2/14-genomics-bwt-aligner/build/CMakeFiles/bwt_aligner.dir
 D:/SOLO-0616-2/14-genomics-bwt-aligner/build/CMakeFiles/test_sa.dir
+D:/SOLO-0616-2/14-genomics-bwt-aligner/build/CMakeFiles/test_sw.dir
+D:/SOLO-0616-2/14-genomics-bwt-aligner/build/CMakeFiles/test_aligner_sw.dir
+D:/SOLO-0616-2/14-genomics-bwt-aligner/build/CMakeFiles/test_sw_minimal.dir
 D:/SOLO-0616-2/14-genomics-bwt-aligner/build/CMakeFiles/ALL_BUILD.dir
 D:/SOLO-0616-2/14-genomics-bwt-aligner/build/CMakeFiles/ZERO_CHECK.dir

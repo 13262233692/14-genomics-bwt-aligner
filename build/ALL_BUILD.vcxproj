@@ -184,9 +184,21 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Project>{776FF424-00DA-3D40-85DE-584080CB312E}</Project>
       <Name>bwt_aligner_core</Name>
     </ProjectReference>
+    <ProjectReference Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\build\test_aligner_sw.vcxproj">
+      <Project>{A57CBBD1-3FC9-392F-815F-5597C44AC718}</Project>
+      <Name>test_aligner_sw</Name>
+    </ProjectReference>
     <ProjectReference Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\build\test_sa.vcxproj">
       <Project>{51D954A0-F537-3042-9BF8-037A79F44878}</Project>
       <Name>test_sa</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\build\test_sw.vcxproj">
+      <Project>{38979C12-4B6A-3AF4-B835-ED6D892EB8EF}</Project>
+      <Name>test_sw</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\build\test_sw_minimal.vcxproj">
+      <Project>{5523722D-C4F5-3FF7-86F2-C05BFFC4648A}</Project>
+      <Name>test_sw_minimal</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

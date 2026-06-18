@@ -22,6 +22,9 @@
     <ClCompile Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\src\sam_writer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\src\smith_waterman.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\src\aligner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -46,6 +49,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\include\sam_writer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\include\smith_waterman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\include\aligner.h">

@@ -8,7 +8,16 @@
       <FullPath>D:\SOLO-0616-2\14-genomics-bwt-aligner\build\Release\bwt_aligner.cp312-win_amd64.pyd</FullPath>
     </ProjectOutput>
     <ProjectOutput>
+      <FullPath>D:\SOLO-0616-2\14-genomics-bwt-aligner\build\Release\test_aligner_sw.exe</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
       <FullPath>D:\SOLO-0616-2\14-genomics-bwt-aligner\build\Release\test_sa.exe</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>D:\SOLO-0616-2\14-genomics-bwt-aligner\build\Release\test_sw.exe</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>D:\SOLO-0616-2\14-genomics-bwt-aligner\build\Release\test_sw_minimal.exe</FullPath>
     </ProjectOutput>
     <ProjectOutput>
       <FullPath>D:\SOLO-0616-2\14-genomics-bwt-aligner\build\x64\Release\ALL_BUILD</FullPath>

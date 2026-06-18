@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\test_sw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\SOLO-0616-2\14-genomics-bwt-aligner\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{DB5B3B31-6A89-3447-98AA-203F69F40668}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
